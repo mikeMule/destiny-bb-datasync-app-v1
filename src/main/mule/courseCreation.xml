@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="courseCreation" doc:id="059ea6f2-dfce-4de9-8a3f-2dc75bc77060" >
+		<logger level="INFO" doc:name="Logger" doc:id="90027a43-40df-479b-af03-50ff8efd195f" message='#[p("env")]'/>
+		<ee:transform doc:name="MAP-Data" doc:id="2f871f66-17fc-4400-9e1e-6881a38e510d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+var Myinput = message.payload.integrationMessage.body.courseSection
+var dataSourceId = "_1_1"  //HumberCollege DestinyOne
+
+---
+{
+  externalId: Myinput.objectId,
+  dataSourceId: dataSourceId,
+  courseId: Myinput.associatedCourse.courseNumber,
+  name: Myinput.sectionTitle,
+  description: Myinput.associatedCourse.name,
+  organization: true,
+  ultraStatus: "Classic",
+  allowGuests: true,
+  closedComplete: false,
+  termId:  "_1_1", //Myinput.associatedTerm.code default
+
+  availability: {
+    available: if (Myinput.sectionStatusCode == "cancel") "No" else "Yes",
+    duration: {
+      "type": "Continuous",
+       start: "2025-05-12T08:03:22.230Z",
+      end: "2025-05-12T08:03:22.230Z",
+      daysOfUse: 0
+    }
+  },
+
+  enrollment: {
+    "type": "SelfEnrollment",
+    start: "2025-05-12T08:03:22.230Z",
+    end: "2025-05-12T08:03:22.230Z",
+    accessCode: "string"
+  },
+
+  locale: {
+    id: "string",
+    force: false
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Request to Blackboard API" doc:id="4a69c2bc-3320-4492-9834-a354c7f864b7" config-ref="blackboard-api-request-config" path="/learn/api/public/v3/courses" >
+			<http:headers ><![CDATA[#[{
+    'Authorization': 'Bearer ' ++ vars.accessToken as String ,
+    'Content-Type': 'application/json'
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="Log Token Response" doc:id="6989ebc8-c43f-404e-94a7-35ad108ca385" message="Token response: #[payload]" />
+		<ee:transform doc:name="Result" doc:id="102c095e-7e57-439f-b5f3-c6d356999057" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b055c9a9-7c0b-4ccc-8e86-62fe36eaea69" type="HTTP:UNAUTHORIZED" >
+				<logger level="ERROR" doc:name="Authentication Error" doc:id="46bf292a-035c-4b1a-b211-7b8c78fdec67" message="Authentication failed with Blackboard API. Check credentials." />
+				<ee:transform doc:name="Prepare Error Response" doc:id="c09b9427-a5db-4a88-b22a-051fb41a6c6e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "error": "Authentication failed with Blackboard API",
+    "status": "Unauthorized",
+    "statusCode": 401,
+    "Env": p("env") as String
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[401]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue1" doc:id="aac59119-7c42-4c6f-989b-de3fb0b69f8e" type="ANY" >
+				<logger level="ERROR" doc:name="General Error" doc:id="c850b35e-b294-42be-88a3-0b543a45f0c5" message="Error calling Blackboard API: #[error.description]" />
+				<ee:transform doc:name="Prepare General Error Response" doc:id="1f7a3faf-c9da-498b-8f6a-4f373e139b06" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "error": error.description,
+    "status": error.errorType.identifier,
+    "statusCode": 500,
+    "Env": p("env") as String
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

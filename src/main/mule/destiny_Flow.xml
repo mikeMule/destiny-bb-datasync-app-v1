@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:oauth2-provider="http://www.mulesoft.org/schema/mule/oauth2-provider"
+	xmlns:oauth="http://www.mulesoft.org/schema/mule/oauth"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/oauth http://www.mulesoft.org/schema/mule/oauth/current/mule-oauth.xsd
+http://www.mulesoft.org/schema/mule/oauth2-provider http://www.mulesoft.org/schema/mule/oauth2-provider/current/mule-oauth2-provider.xsd">
+	
+	<!-- [STUDIO:"Destiny_Flow"]<sub-flow name="Destiny_Flow" doc:id="30f6bbb8-f318-4eb6-b825-a419bbb3da7b">
+    
+    
+    
+                             <logger level="INFO" doc:name="Logger" doc:id="cd28e17c-8e89-4c5b-85dd-82f0a2a32957" message="Start Get Student from Destiny for : #[vars.inputPayload.integrationMessage.body.gradingSheetInfo.supplementalInfos.supplementalInfo.studentId&#93;"/>
+                             <set-variable value="N9#rTz!8gLq@$WsE" doc:name="Set Variable" doc:id="afe19731-7448-4756-b912-e06e961fbe62" variableName="pass"/>
+		<http:request method="POST" doc:name="Destiny Login" doc:id="35e738c2-54fc-4a3d-92d2-43a64055dca4" config-ref="Destiny_HTTP_Request_configuration" path="/webservice/InternalViewREST/login?_type=json" target="DestinyLogin">
+                                           <http:body ><![CDATA[#[%dw 2.0
+output application/json
+ 
+&#45;&#45;-
+{
+    "loginRequest": {
+        "username":  "websvc", //Mule::p('secure::destiny.username'),
+        "password": vars.pass //Mule::p('secure::destiny.password')
+    }
+}&#93;&#93;&#93;></http:body>
+                             </http:request>
+                             <try doc:name="Try" doc:id="1a662930-2c4f-4f36-8133-ef55ca2d7516" >
+                                           <http:request method="GET" doc:name="Get Student from Destiny" doc:id="19acde63-c28b-4f8a-bef6-1f923dfcf8e9" config-ref="Destiny_HTTP_Request_configuration" path="/webservice/InternalViewREST/student/objectId/{studentId}" target="getStudent">
+                                           <http:headers><![CDATA[#[output application/java
+&#45;&#45;-
+{
+              "sessionId" : vars.DestinyLogin.loginResponse.sessionId
+}&#93;&#93;&#93;></http:headers>
+                                           <http:uri-params><![CDATA[#[output application/java
+&#45;&#45;-
+{
+              "studentId" : vars.inputPayload.integrationMessage.body.gradingSheetInfo.supplementalInfos.supplementalInfo.studentId
+}&#93;&#93;&#93;></http:uri-params>
+                                           <http:query-params><![CDATA[#[output application/java
+&#45;&#45;-
+{
+              "_type" : "json",
+              "informationLevel" : "full"
+}&#93;&#93;&#93;></http:query-params>
+                             </http:request>
+                                           <error-handler >
+                                                          <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="17deee86-450a-49dd-8e81-c32228f9a573" >
+                                                                        <logger level="INFO" doc:name="Logger" doc:id="cda0ce46-3685-4d4a-b5fd-bcdc5892a94e" message="#[%dw 2.0
+output application/json
+&#45;&#45;-
+{
+message: error.errorMessage
+}&#93;"/>
+                                                          </on-error-continue>
+                                           </error-handler>
+                             </try>
+                             <http:request method="POST" doc:name="Destiny Logout" doc:id="bb323421-1605-4197-b13f-f226e043c805" config-ref="Destiny_HTTP_Request_configuration" path="/webservice/InternalViewRESTV2/logout?_type=json">
+                                           <http:body ><![CDATA[#[%dw 2.0
+output application/json
+&#45;&#45;-
+{
+"logoutRequest": {
+  "sessionId": vars.DestinyLogin.loginResponse.sessionId
+}
+}&#93;&#93;&#93;></http:body>
+                             </http:request>
+                             <logger level="INFO" doc:name="Logger" doc:id="a2691c0a-bd8c-4994-9d24-edd1f2e46b6e" message="End Get Student from Destiny for : #[vars.inputPayload.integrationMessage.body.gradingSheetInfo.supplementalInfos.supplementalInfo.studentId&#93;"/>
+                            
+        
+ 
+ 
+             
+    
+    
+    
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+&#45;&#45;-
+ 
+payload
+ 
+ 
+//{
+//  status: "success",
+//  message: "Course successfully created in Blackboard.",
+//  courseObjectId: 1001,
+//  lmsCourseId: "COMP101-2025-SPRING"
+//} as Object {encoding: "UTF-8", mediaType: "application/json"}&#93;&#93;></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </sub-flow> [STUDIO] -->
+
+	
+	
+</mule>
